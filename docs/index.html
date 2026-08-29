@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Paper: Content Refresh & Action Scoring Model</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #222; max-width: 850px; margin: 0 auto; padding: 40px 20px; }
+        h1 { font-size: 2.2rem; color: #111; margin-bottom: 10px; }
+        h2 { font-size: 1.5rem; color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; margin-top: 35px; }
+        h3 { font-size: 1.2rem; color: #374151; margin-top: 20px; }
+        .abstract-box { background-color: #f3f4f6; border-left: 4px solid #2563eb; padding: 18px; border-radius: 4px; margin: 20px 0; font-size: 1.05rem; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #e5e7eb; padding: 10px 14px; text-align: left; }
+        th { background-color: #f9fafb; font-weight: 600; }
+        ul, ol { padding-left: 20px; }
+        code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        .no-go { background: #fef2f2; border: 1px solid #fecaca; padding: 12px; border-radius: 6px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+
+    <h1>Evaluating Organic Traffic Decay & Automated Content Refresh Prioritization</h1>
+    <p><em>Published as part of the FlyRank Research Capstone Series</em></p>
+
+    <div class="abstract-box">
+        <strong>Abstract:</strong> Content performance in enterprise search intelligence experiences natural decay over time due to algorithmic updates and evolving query intent. To optimize organic visibility, we built a machine learning pipeline evaluating page-level engagement decay across multi-tenant enterprise data. Using a client-grouped validation split (<code>GroupShuffleSplit</code>), our Random Forest ranking architecture achieved an honest ROC-AUC score of 0.742, eliminating data leakage present in naive random splits (AUC 0.881). These predictions were translated into a structured content action playbook with concrete reason codes to guide human editorial workflows. The resulting model serves as a decision-support system to prioritize content refresh and consolidation efforts without risky automated execution.
+    </div>
+
+    <h2>1. Introduction & Problem Statement</h2>
+    <p>Enterprise marketing teams manage thousands of published URLs, but lack systematic data-driven mechanisms to prioritize which content requires updating, pruning, or consolidation. Blindly refreshing high-volume pages often wastes editorial resources, while ignoring decaying pages leads to steady organic visibility losses. This work provides an operational decision-support tool that ranks content opportunities based on observed decay rates and predicted performance potential.</p>
+
+    <h2>2. Data Description</h2>
+    <p>This study utilizes enterprise search analytics from the FlyRank dataset release. The dataset includes historical impression volumes, click counts, session durations, word count metrics, and entity identifiers across client domains. To maintain strict public-safety standards, all client identifiers, individual domain names, specific URL paths, and proprietary search queries were masked or excluded prior to feature engineering.</p>
+
+    <h2>3. Methodology & Validation Design</h2>
+    <p>We engineered features representing temporal traffic trajectory, word count density, and historical engagement stability. Ground truth target labels designate pages undergoing significant engagement decay despite historically strong performance.</p>
+    <p>To ensure rigorous model evaluation, we audited for feature leakage. Naive random cross-validation allows client-specific data traits to leak across folds, overestimating out-of-domain performance. We implemented a <strong>Client-Grouped Split</strong> (grouped by <code>client_id</code>) to test true out-of-domain generalization.</p>
+
+    <h2>4. Results & Performance Comparison</h2>
+    <p>Evaluating the model under an honest grouped split revealed the impact of eliminating client-level feature leakage:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Split Strategy</th>
+                <th>Validation ROC-AUC</th>
+                <th>Observed Drop</th>
+                <th>Generalization Integrity</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Naive Random Split</td>
+                <td>0.8810</td>
+                <td>Baseline</td>
+                <td>High risk of entity leakage</td>
+            </tr>
+            <tr>
+                <td><strong>Client-Grouped Split (Honest)</strong></td>
+                <td><strong>0.7420</strong></td>
+                <td><strong>-0.1390</strong></td>
+                <td><strong>Verified leakage-free</strong></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>5. Limitations & Public-Safe Framing</h2>
+    <p>All findings in this paper reflect <em>observed directional trends</em> and serve strictly as <em>decision-support indicators</em>. The model does not establish causal proof that refreshing a given page will guarantee search rank recovery, nor does it attempt to model unobserved search engine algorithm updates.</p>
+
+    <h2>6. Ranked Content Recommendations (Action Playbook)</h2>
+    <p>Model outputs are mapped directly into prioritized action tiers equipped with audit reason codes:</p>
+    <ul>
+        <li><code>REFRESH</code> (<em>RC01_DECAY_HIGH_POTENTIAL</em>): High historical traffic exhibiting recent decay.</li>
+        <li><code>PRUNE</code> (<em>RC02_LOW_ENGAGEMENT_THIN</em>): Low engagement combined with thin content length (&lt;500 words).</li>
+        <li><code>CONSOLIDATE</code> (<em>RC03_HIGH_REDUNDANCY</em>): High semantic overlap with higher-ranking client URLs.</li>
+        <li><code>MAINTAIN</code> (<em>RC04_STABLE_PERFORMANCE</em>): Steady metrics within baseline expectations.</li>
+    </ul>
+
+    <div class="no-go">
+        <strong>Strict No-Go Rules (Human-in-the-Loop Safeguards):</strong>
+        <ul>
+            <li>No automated deletion of live URLs or pages.</li>
+            <li>No programmatic overwriting of published copy without human editorial sign-off.</li>
+            <li>Exemption of legal, regulatory, or policy pages from automated pruning logic.</li>
+        </ul>
+    </div>
+
+    <h2>7. Reproducibility & Repo Access</h2>
+    <p>All data pipelines, validation audit notebooks, and playbook generation code are fully reproducible and available in the accompanying GitHub repository.</p>
+
+    <h2>8. Acknowledgments & Data Credit</h2>
+    <p>Built on the <a href="https://flyrank.ai" target="_blank" rel="noopener">FlyRank ML Internship dataset</a>.</p>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Paper: Content Refresh & Action Scoring Model</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #222; max-width: 850px; margin: 0 auto; padding: 40px 20px; }
+        h1 { font-size: 2.2rem; color: #111; margin-bottom: 10px; }
+        h2 { font-size: 1.5rem; color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; margin-top: 35px; }
+        h3 { font-size: 1.2rem; color: #374151; margin-top: 20px; }
+        .abstract-box { background-color: #f3f4f6; border-left: 4px solid #2563eb; padding: 18px; border-radius: 4px; margin: 20px 0; font-size: 1.05rem; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #e5e7eb; padding: 10px 14px; text-align: left; }
+        th { background-color: #f9fafb; font-weight: 600; }
+        ul, ol { padding-left: 20px; }
+        code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        .no-go { background: #fef2f2; border: 1px solid #fecaca; padding: 12px; border-radius: 6px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+
+    <h1>Evaluating Organic Traffic Decay & Automated Content Refresh Prioritization</h1>
+    <p><em>Published as part of the FlyRank Research Capstone Series</em></p>
+
+    <div class="abstract-box">
+        <strong>Abstract:</strong> Content performance in enterprise search intelligence experiences natural decay over time due to algorithmic updates and evolving query intent. To optimize organic visibility, we built a machine learning pipeline evaluating page-level engagement decay across multi-tenant enterprise data. Using a client-grouped validation split (<code>GroupShuffleSplit</code>), our Random Forest ranking architecture achieved an honest ROC-AUC score of 0.742, eliminating data leakage present in naive random splits (AUC 0.881). These predictions were translated into a structured content action playbook with concrete reason codes to guide human editorial workflows. The resulting model serves as a decision-support system to prioritize content refresh and consolidation efforts without risky automated execution.
+    </div>
+
+    <h2>1. Introduction & Problem Statement</h2>
+    <p>Enterprise marketing teams manage thousands of published URLs, but lack systematic data-driven mechanisms to prioritize which content requires updating, pruning, or consolidation. Blindly refreshing high-volume pages often wastes editorial resources, while ignoring decaying pages leads to steady organic visibility losses. This work provides an operational decision-support tool that ranks content opportunities based on observed decay rates and predicted performance potential.</p>
+
+    <h2>2. Data Description</h2>
+    <p>This study utilizes enterprise search analytics from the FlyRank dataset release. The dataset includes historical impression volumes, click counts, session durations, word count metrics, and entity identifiers across client domains. To maintain strict public-safety standards, all client identifiers, individual domain names, specific URL paths, and proprietary search queries were masked or excluded prior to feature engineering.</p>
+
+    <h2>3. Methodology & Validation Design</h2>
+    <p>We engineered features representing temporal traffic trajectory, word count density, and historical engagement stability. Ground truth target labels designate pages undergoing significant engagement decay despite historically strong performance.</p>
+    <p>To ensure rigorous model evaluation, we audited for feature leakage. Naive random cross-validation allows client-specific data traits to leak across folds, overestimating out-of-domain performance. We implemented a <strong>Client-Grouped Split</strong> (grouped by <code>client_id</code>) to test true out-of-domain generalization.</p>
+
+    <h2>4. Results & Performance Comparison</h2>
+    <p>Evaluating the model under an honest grouped split revealed the impact of eliminating client-level feature leakage:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Split Strategy</th>
+                <th>Validation ROC-AUC</th>
+                <th>Observed Drop</th>
+                <th>Generalization Integrity</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Naive Random Split</td>
+                <td>0.8810</td>
+                <td>Baseline</td>
+                <td>High risk of entity leakage</td>
+            </tr>
+            <tr>
+                <td><strong>Client-Grouped Split (Honest)</strong></td>
+                <td><strong>0.7420</strong></td>
+                <td><strong>-0.1390</strong></td>
+                <td><strong>Verified leakage-free</strong></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>5. Limitations & Public-Safe Framing</h2>
+    <p>All findings in this paper reflect <em>observed directional trends</em> and serve strictly as <em>decision-support indicators</em>. The model does not establish causal proof that refreshing a given page will guarantee search rank recovery, nor does it attempt to model unobserved search engine algorithm updates.</p>
+
+    <h2>6. Ranked Content Recommendations (Action Playbook)</h2>
+    <p>Model outputs are mapped directly into prioritized action tiers equipped with audit reason codes:</p>
+    <ul>
+        <li><code>REFRESH</code> (<em>RC01_DECAY_HIGH_POTENTIAL</em>): High historical traffic exhibiting recent decay.</li>
+        <li><code>PRUNE</code> (<em>RC02_LOW_ENGAGEMENT_THIN</em>): Low engagement combined with thin content length (&lt;500 words).</li>
+        <li><code>CONSOLIDATE</code> (<em>RC03_HIGH_REDUNDANCY</em>): High semantic overlap with higher-ranking client URLs.</li>
+        <li><code>MAINTAIN</code> (<em>RC04_STABLE_PERFORMANCE</em>): Steady metrics within baseline expectations.</li>
+    </ul>
+
+    <div class="no-go">
+        <strong>Strict No-Go Rules (Human-in-the-Loop Safeguards):</strong>
+        <ul>
+            <li>No automated deletion of live URLs or pages.</li>
+            <li>No programmatic overwriting of published copy without human editorial sign-off.</li>
+            <li>Exemption of legal, regulatory, or policy pages from automated pruning logic.</li>
+        </ul>
+    </div>
+
+    <h2>7. Reproducibility & Repo Access</h2>
+    <p>All data pipelines, validation audit notebooks, and playbook generation code are fully reproducible and available in the accompanying GitHub repository.</p>
+
+    <h2>8. Acknowledgments & Data Credit</h2>
+    <p>Built on the <a href="https://flyrank.ai" target="_blank" rel="noopener">FlyRank ML Internship dataset</a>.</p>
+
+</body>
+</html>
